@@ -206,7 +206,7 @@
     <!-- 一括貼り付け -->
     <div style="margin-bottom:14px">
       <label class="field">一括貼り付け（会議名・日付・時間を自動入力）</label>
-      <input id="mtgPaste" type="text" placeholder="例：【定例】顧問契約／株式会社〇〇　3月10日（月曜日）　15:00〜15:40" style="width:100%;background:#0f172a;border:1px solid #3b82f6;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none" oninput="parseMtgPaste(this.value)">
+      <textarea id="mtgPaste" rows="2" placeholder="【定例】顧問契約／株式会社シャリオン&#10;5月21日 (木曜日)⋅午前10:00～10:30" style="width:100%;background:#0f172a;border:1px solid #3b82f6;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none;resize:none;font-family:inherit" oninput="parseMtgPaste(this.value)"></textarea>
       <div id="pasteHint" style="font-size:11px;color:#64748b;margin-top:4px;display:none"></div>
     </div>
 
@@ -739,25 +739,54 @@ function copyBio() {
 }
 
 // ===== MTG PASTE PARSER =====
+function normalizeTime(t) {
+  const ampm = t.match(/^(午前|午後)/);
+  const timeOnly = t.replace(/^(午前|午後)/, '');
+  const [h, m] = timeOnly.split(':').map(Number);
+  if (!ampm) return timeOnly;
+  if (ampm[1] === '午後' && h !== 12) return `${h + 12}:${String(m).padStart(2, '0')}`;
+  if (ampm[1] === '午前' && h === 12) return `0:${String(m).padStart(2, '0')}`;
+  return timeOnly;
+}
+
 function parseMtgPaste(text) {
-  if (!text) return;
+  if (!text.trim()) return;
   const hint = document.getElementById('pasteHint');
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
 
-  // 日付: 3月10日（月曜日）/ 2025年3月10日（月）
-  const dateMatch = text.match(/(\d{4}年)?(\d{1,2}月\d{1,2}日(?:（[^）]*）)?)/);
-  // 時間: 15:00〜15:40 / 15:00-15:40 / 15:00～15:40
-  const timeMatch = text.match(/(\d{1,2}:\d{2}[〜～~\-–]\d{1,2}:\d{2})/);
+  // 日付: 5月 21日 (木曜日) / 3月10日（月曜日）/ 2025年3月10日
+  const datePattern = /(?:\d{4}年\s*)?\d{1,2}月\s*\d{1,2}日(?:\s*[（(][^）)]*[）)])?/;
+  // 時間: 午前10:00～10:30 / 15:00〜15:40
+  const timePattern = /((?:午前|午後)?\d{1,2}:\d{2})\s*[〜～~\-–⋅∙·]\s*((?:午前|午後)?\d{1,2}:\d{2})/;
 
-  // 会議名: 日付・時間を除いた残り（前後スペース・区切り文字をトリム）
-  let titleStr = text;
-  if (dateMatch) titleStr = titleStr.replace(dateMatch[0], '');
-  if (timeMatch) titleStr = titleStr.replace(timeMatch[0], '');
-  titleStr = titleStr.replace(/[\s　\-–・|｜,，、]+/g, ' ').trim();
+  const fullText = text;
+  const dateMatch = fullText.match(datePattern);
+  const timeMatch = fullText.match(timePattern);
+
+  let dateStr = '', timeStr = '', titleStr = '';
+
+  if (dateMatch) {
+    // 正規化: スペース除去、半角括弧→全角
+    dateStr = dateMatch[0].replace(/\s+/g, '').replace('(', '（').replace(')', '）');
+  }
+  if (timeMatch) {
+    timeStr = normalizeTime(timeMatch[1]) + '〜' + normalizeTime(timeMatch[2]);
+  }
+
+  // タイトル: 複数行なら1行目、1行なら日付・時間を除いた残り
+  if (lines.length > 1) {
+    titleStr = lines[0].trim();
+  } else {
+    let t = fullText;
+    if (dateMatch) t = t.replace(dateMatch[0], '');
+    if (timeMatch) t = t.replace(timeMatch[0], '');
+    titleStr = t.replace(/[⋅∙·•\s　\-–・|｜,，、]+/g, ' ').trim();
+  }
 
   const filled = [];
   if (titleStr) { document.getElementById('mtgTitle').value = titleStr; filled.push('会議名'); }
-  if (dateMatch) { document.getElementById('mtgDate').value = dateMatch[0]; filled.push('日付'); }
-  if (timeMatch) { document.getElementById('mtgTime').value = timeMatch[1]; filled.push('時間'); }
+  if (dateStr)  { document.getElementById('mtgDate').value  = dateStr;  filled.push('日付'); }
+  if (timeStr)  { document.getElementById('mtgTime').value  = timeStr;  filled.push('時間'); }
 
   if (filled.length) {
     hint.textContent = `✅ 自動入力: ${filled.join('・')}`;
