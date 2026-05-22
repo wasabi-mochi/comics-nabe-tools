@@ -237,11 +237,11 @@
     </div>
 
     <!-- ファイルアップロード -->
-    <label class="field">MP4 / VTT ファイル（Gemini APIキーが必要）</label>
+    <label class="field">MP4 / M4A / VTT ファイル（Gemini APIキーが必要）</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <label style="display:inline-flex;align-items:center;gap:6px;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:#94a3b8;">
         📎 ファイルを選択
-        <input type="file" id="minutesFileInput" accept=".mp4,.vtt,.txt" style="display:none" onchange="onMinutesFileSelect(event)">
+        <input type="file" id="minutesFileInput" accept=".mp4,.m4a,.vtt,.txt" style="display:none" onchange="onMinutesFileSelect(event)">
       </label>
       <span id="minutesFileName" style="font-size:12px;color:#64748b;"></span>
     </div>
@@ -841,7 +841,7 @@ async function runTranscribe() {
         headers: {
           'X-Goog-Upload-Protocol': 'resumable',
           'X-Goog-Upload-Command': 'start',
-          'X-Goog-Upload-Header-Content-Type': 'video/mp4',
+          'X-Goog-Upload-Header-Content-Type': minutesFile.name.endsWith('.m4a') ? 'audio/mp4' : 'video/mp4',
           'X-Goog-Upload-Header-Content-Length': minutesFile.size,
           'Content-Type': 'application/json',
         },
@@ -897,7 +897,7 @@ async function runTranscribe() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [
-            { fileData: { mimeType: 'video/mp4', fileUri } },
+            { fileData: { mimeType: minutesFile.name.endsWith('.m4a') ? 'audio/mp4' : 'video/mp4', fileUri } },
             { text: transcribePrompt }
           ]}],
           generationConfig: { maxOutputTokens: 65536 }
@@ -960,7 +960,7 @@ async function runMinutes() {
   errEl.textContent = '';
 
   // ファイルが選択されていれば先に文字起こし
-  if (minutesFile && (minutesFile.name.endsWith('.mp4') || minutesFile.name.endsWith('.vtt'))) {
+  if (minutesFile && (minutesFile.name.endsWith('.mp4') || minutesFile.name.endsWith('.m4a') || minutesFile.name.endsWith('.vtt'))) {
     try {
       await runTranscribe();
     } catch(e) {
