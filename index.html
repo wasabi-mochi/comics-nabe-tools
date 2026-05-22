@@ -210,12 +210,12 @@
       <div id="pasteHint" style="font-size:11px;color:#64748b;margin-top:4px;display:none"></div>
     </div>
 
+    <input id="mtgTitle" type="hidden">
+    <input id="mtgDate" type="hidden">
+    <input id="mtgTime" type="hidden">
+
     <!-- 会議情報 -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div>
-        <label class="field">会議名</label>
-        <input id="mtgTitle" type="text" placeholder="例：【定例】顧問契約／株式会社〇〇" style="width:100%;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none">
-      </div>
       <div>
         <label class="field">MTG種別</label>
         <select id="mtgType" style="width:100%;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none">
@@ -225,14 +225,6 @@
           <option value="kyozon商談">kyozon商談</option>
           <option value="その他">その他</option>
         </select>
-      </div>
-      <div>
-        <label class="field">日付</label>
-        <input id="mtgDate" type="text" placeholder="例：3月10日（月曜日）" style="width:100%;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none">
-      </div>
-      <div>
-        <label class="field">時間</label>
-        <input id="mtgTime" type="text" placeholder="例：15:00〜15:40" style="width:100%;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none">
       </div>
       <div>
         <label class="field">先方参加者</label>
