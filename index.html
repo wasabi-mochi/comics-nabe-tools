@@ -203,6 +203,13 @@
     <h2>📝 議事録自動生成</h2>
     <p>MP4/VTTをアップロードするか、文字起こしテキストを貼り付けて議事録を生成します。</p>
 
+    <!-- 一括貼り付け -->
+    <div style="margin-bottom:14px">
+      <label class="field">一括貼り付け（会議名・日付・時間を自動入力）</label>
+      <input id="mtgPaste" type="text" placeholder="例：【定例】顧問契約／株式会社〇〇　3月10日（月曜日）　15:00〜15:40" style="width:100%;background:#0f172a;border:1px solid #3b82f6;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none" oninput="parseMtgPaste(this.value)">
+      <div id="pasteHint" style="font-size:11px;color:#64748b;margin-top:4px;display:none"></div>
+    </div>
+
     <!-- 会議情報 -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div>
@@ -729,6 +736,38 @@ function copyBio() {
     btn.textContent = '✅ コピーしました！';
     setTimeout(() => { btn.textContent = '📋 コピー'; }, 2000);
   });
+}
+
+// ===== MTG PASTE PARSER =====
+function parseMtgPaste(text) {
+  if (!text) return;
+  const hint = document.getElementById('pasteHint');
+
+  // 日付: 3月10日（月曜日）/ 2025年3月10日（月）
+  const dateMatch = text.match(/(\d{4}年)?(\d{1,2}月\d{1,2}日(?:（[^）]*）)?)/);
+  // 時間: 15:00〜15:40 / 15:00-15:40 / 15:00～15:40
+  const timeMatch = text.match(/(\d{1,2}:\d{2}[〜～~\-–]\d{1,2}:\d{2})/);
+
+  // 会議名: 日付・時間を除いた残り（前後スペース・区切り文字をトリム）
+  let titleStr = text;
+  if (dateMatch) titleStr = titleStr.replace(dateMatch[0], '');
+  if (timeMatch) titleStr = titleStr.replace(timeMatch[0], '');
+  titleStr = titleStr.replace(/[\s　\-–・|｜,，、]+/g, ' ').trim();
+
+  const filled = [];
+  if (titleStr) { document.getElementById('mtgTitle').value = titleStr; filled.push('会議名'); }
+  if (dateMatch) { document.getElementById('mtgDate').value = dateMatch[0]; filled.push('日付'); }
+  if (timeMatch) { document.getElementById('mtgTime').value = timeMatch[1]; filled.push('時間'); }
+
+  if (filled.length) {
+    hint.textContent = `✅ 自動入力: ${filled.join('・')}`;
+    hint.style.color = '#4ade80';
+    hint.style.display = '';
+  } else {
+    hint.textContent = '日付・時間のパターンが見つかりませんでした';
+    hint.style.color = '#f87171';
+    hint.style.display = '';
+  }
 }
 
 // ===== MINUTES FILE =====
