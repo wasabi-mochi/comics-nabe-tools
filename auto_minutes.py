@@ -270,11 +270,8 @@ def fetch_next_meeting(title: str) -> dict:
 
         search_query = title.split("／")[-1].strip() if "／" in title else title
 
-        # 今日の翌日0時以降で検索
-        from datetime import timedelta
-        tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
-        tomorrow = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
-        time_min = tomorrow.isoformat()
+        # 現在時刻以降で検索（今日の後半に予定されている次回MTGも拾う）
+        time_min = datetime.now(timezone.utc).isoformat()
 
         print(f"[Calendar] 検索クエリ: '{search_query}' / timeMin: {time_min}")
 
@@ -624,6 +621,7 @@ Cc：代表、参加メンバー
 - Messenger案内文の[議事録URL]はそのまま「[議事録URL]」と出力してください（後で手動で入力）
 - Messenger案内文は空行を一切入れないでください。各行の間は改行1つのみ。━と本文の間も改行1つのみ。絶対に空行（連続する改行）を挿入しないでください
 - 次回MTGのZoom情報（URL・ID・パスコード）は文字起こしから正確に抽出してください
+- 先方参加者の氏名を本文中で表記する場合は「〇〇様」とし、「〇〇氏」は使用しないでください
 - 「〇〇より」「〇〇氏より」「〇〇から」などの発言者帰属表現は使用しないでください。内容を主語なしで簡潔・明確に記載してください
 - 発言を「」で引用する形式は使用しないでください。発言内容は地の文として簡潔にまとめてください
 
