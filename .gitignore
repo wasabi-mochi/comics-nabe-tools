@@ -1,3 +1,4 @@
 .env
 token.json
 .processed_files.json
+client_secret*.json
