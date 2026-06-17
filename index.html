@@ -421,26 +421,24 @@ async function fetchNextMtgData(meetingTitle, onStatus) {
       maxResults: '10'
     };
 
-    // まず顧客名で検索、なければ全件から取得
+    // 顧客名で検索し、タイトルに「定例」または「顧問契約」を含むものに絞る
     let event = null;
-    for (const [label, params] of [['顧客名検索', { ...baseParams, q: searchQuery }], ['全件フォールバック', baseParams]]) {
-      log(`${label}中...`);
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${new URLSearchParams(params)}`, {
-        headers: { 'Authorization': `Bearer ${_googleAccessToken}` }
-      });
-      if (res.status === 401) {
-        _googleAccessToken = null;
-        await authorizeGoogle();
-        return fetchNextMtgData(meetingTitle, onStatus);
-      }
-      if (!res.ok) { log(`APIエラー: ${res.status}`); return empty; }
-      const data = await res.json();
-      log(`${label}: ${data.items ? data.items.length : 0}件`);
-      if (data.items && data.items.length > 0) {
-        event = data.items[0];
-        log(`取得成功: ${event.summary}`);
-        break;
-      }
+    log(`顧客名検索中...`);
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${new URLSearchParams({ ...baseParams, q: searchQuery })}`, {
+      headers: { 'Authorization': `Bearer ${_googleAccessToken}` }
+    });
+    if (res.status === 401) {
+      _googleAccessToken = null;
+      await authorizeGoogle();
+      return fetchNextMtgData(meetingTitle, onStatus);
+    }
+    if (!res.ok) { log(`APIエラー: ${res.status}`); return empty; }
+    const data = await res.json();
+    log(`検索結果: ${data.items ? data.items.length : 0}件`);
+    if (data.items && data.items.length > 0) {
+      event = data.items.find(e => e.summary && (e.summary.includes('定例') || e.summary.includes('顧問契約'))) || null;
+      if (event) log(`取得成功: ${event.summary}`);
+      else log('定例・顧問契約を含む予定が見つかりませんでした');
     }
     if (!event) { log('予定が見つかりませんでした'); return empty; }
     const startDt = event.start.dateTime || event.start.date;
