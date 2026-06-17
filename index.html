@@ -370,18 +370,20 @@ function authorizeGoogle() {
     const clientId = getGoogleClientId();
     if (!clientId) { resolve(null); return; }
     if (typeof google === 'undefined' || !google.accounts) { resolve(null); return; }
-    const timer = setTimeout(() => reject(new Error('Google認証タイムアウト（ブラウザのポップアップブロックを解除してください）')), 5000);
+    _googleAccessToken = null;
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
       callback: (resp) => {
-        clearTimeout(timer);
         if (resp.error) { reject(new Error(resp.error)); return; }
         _googleAccessToken = resp.access_token;
         resolve(resp.access_token);
+      },
+      error_callback: (err) => {
+        reject(new Error(err.type || 'Google認証エラー'));
       }
     });
-    tokenClient.requestAccessToken({ prompt: _googleAccessToken ? '' : 'consent' });
+    tokenClient.requestAccessToken({ prompt: 'consent' });
   });
 }
 
