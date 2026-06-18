@@ -421,7 +421,7 @@ async function fetchNextMtgData(meetingTitle, onStatus) {
       maxResults: '10'
     };
 
-    // 顧客名で検索し、タイトルに「定例」または「顧問契約」を含むものに絞る
+    // 会議名でカレンダーを検索し、タイトルが一致するイベントを取得
     let event = null;
     log(`顧客名検索中...`);
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${new URLSearchParams({ ...baseParams, q: searchQuery })}`, {
@@ -436,9 +436,12 @@ async function fetchNextMtgData(meetingTitle, onStatus) {
     const data = await res.json();
     log(`検索結果: ${data.items ? data.items.length : 0}件`);
     if (data.items && data.items.length > 0) {
-      event = data.items.find(e => e.summary && (e.summary.includes('定例') || e.summary.includes('顧問契約'))) || null;
+      data.items.forEach(e => log(`  候補: ${e.summary} (${e.start.dateTime || e.start.date})`));
+      event = data.items.find(e => e.summary && e.summary === meetingTitle)
+        || data.items.find(e => e.summary && e.summary.includes(searchQuery) && (e.summary.includes('定例') || e.summary.includes('顧問契約')))
+        || null;
       if (event) log(`取得成功: ${event.summary}`);
-      else log('定例・顧問契約を含む予定が見つかりませんでした');
+      else log('一致する予定が見つかりませんでした');
     }
     if (!event) { log('予定が見つかりませんでした'); return empty; }
     const startDt = event.start.dateTime || event.start.date;
