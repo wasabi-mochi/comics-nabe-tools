@@ -437,11 +437,15 @@ async function fetchNextMtgData(meetingTitle, onStatus) {
     log(`検索結果: ${data.items ? data.items.length : 0}件`);
     if (data.items && data.items.length > 0) {
       data.items.forEach(e => log(`  候補: ${e.summary} (${e.start.dateTime || e.start.date})`));
-      event = data.items.find(e => e.summary && e.summary === meetingTitle)
-        || data.items.find(e => e.summary && e.summary.includes(searchQuery) && (e.summary.includes('定例') || e.summary.includes('顧問契約')))
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const isFuture = (e) => new Date(e.start.dateTime || e.start.date) >= tomorrow;
+      event = data.items.find(e => isFuture(e) && e.summary && e.summary === meetingTitle)
+        || data.items.find(e => isFuture(e) && e.summary && e.summary.includes(searchQuery) && (e.summary.includes('定例') || e.summary.includes('顧問契約')))
         || null;
-      if (event) log(`取得成功: ${event.summary}`);
-      else log('一致する予定が見つかりませんでした');
+      if (event) log(`取得成功: ${event.summary} (${event.start.dateTime || event.start.date})`);
+      else log('次回の予定が見つかりませんでした（今日のイベントはスキップ）');
     }
     if (!event) { log('予定が見つかりませんでした'); return empty; }
     const startDt = event.start.dateTime || event.start.date;
